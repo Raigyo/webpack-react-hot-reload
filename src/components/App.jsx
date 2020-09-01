@@ -4,7 +4,7 @@ import Hello from './Hello'
 
 class App extends React.Component {
   render () {
-    return <Hello name={'world'}/>
+    return <Hello name={'belgium'}/>
   }
 }
 export default hot(App);

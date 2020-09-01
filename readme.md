@@ -1,8 +1,8 @@
 # Webpack 4: React with hot reload
 
-> 🔨 Webpack with React. From Grafikart.fr '[Comprendre Webpack: React avec hot reload](https://www.youtube.com/watch?v=0AJ0Ro6DeYw&list=PLjwdMgw5TTLVzGXGxEBdjwHXCeYnBb7n8&index=11)'.
+> 🔨 Webpack with React. From Grafikart.fr '[Comprendre Webpack: React avec hot reload](https://www.youtube.com/watch?v=0AJ0Ro6DeYw&list=PLjwdMgw5TTLVzGXGxEBdjwHXCeYnBb7n8&index=11)' and '[React Hot Loader with Web Dev Server](https://dev.to/nanosoftonline/react-hot-loader-with-web-dev-server-aop)' from Nanosoft.
 >
-> Webpack with a focus on *hot reload* using Hot Module Replacement (HMR).
+> Webpack with a focus on *hot reload* using Hot Module Replacement (HMR) in React with classes and persistant states during reload.
 
 For a general Webpack overview, see my [webpack-overview](https://github.com/Raigyo/webpack-overview) repository.
 
@@ -82,7 +82,10 @@ Install Babel and some presets
 
 ````json
 {
-  "presets": ["@babel/preset-env", "@babel/react"]
+  "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+  ]
 }
 ````
 
@@ -92,7 +95,7 @@ Install Babel and some presets
 
 **Create**
 
-**src/mains.js**
+**src/mains.jsx**
 
 ````jsx
 import React from 'react'
@@ -137,11 +140,12 @@ It should open [http://localhost:8080/](http://localhost:8080/) and display *Hel
 import React from 'react'
 import Hello from './Hello'
 
-export default class App extends React.Component {
+class App extends React.Component {
   render () {
     return <Hello name={'world'}/>
   }
 }
+export default hot(App);
 ````
 
 **components/Hello.jsx**
@@ -149,11 +153,12 @@ export default class App extends React.Component {
 ````jsx
 import React from 'react'
 
-export default class Hello extends React.Component {
+class Hello extends React.Component {
   render () {
     return <div>Hello {this.props.name}!</div>
   }
 }
+export default hot(Hello)
 ````
 
 **main.jsx** 
@@ -222,18 +227,21 @@ if (process.env.NODE_ENV === 'production') {
 It's also possible to take actions according to the type of environment.
 
 ````js
-// Filter to add plugin according to process.env.NODE_ENV
+//Filter to add plugin according to process.env.NODE_ENV
 if (process.env.NODE_ENV === 'production'){
-  config.optimization.push(
-    //add plugin /action
-  )
   config.plugins.push(
-    new webpack.optimize.OccurrenceOrderPlugin()
+    // add plugin for production
   )
 } else {
-	// action
+  config.plugins.push(
+    // add plugin for development
+  )
 }
 ````
+
+Now if we launch `npm run build`, it outputs the build in the asset folder.
+
+To improve the configuration, see my [webpack-overview](https://github.com/Raigyo/webpack-overview) repository.
 
 
 
@@ -245,14 +253,15 @@ In a big application It could involve to loose a lot of time to retrieve exactly
 
 `npm i -D react-hot-loader`
 
-For instance if we add a counter and then make any change in the code, the state counter comes back to zero.
+For instance if we add a counter and then make any change in the code, the state of the counter counter comes back to zero.
 
-**components/Hello.jsx**
+**components/Hello.jsx**, using 'react-hot-loader'
 
 ````js
+import { hot } from 'react-hot-loader/root'
 import React from 'react'
 
-export default class Hello extends React.Component {
+class Hello extends React.Component {
   constructor (props) {
     super(props)
     this.increment = this.increment.bind(this)
@@ -263,10 +272,11 @@ export default class Hello extends React.Component {
 
   render () {
     return <div>
-      Hello {this.props.name}!
-      Counter: {this.state.counter}
-      {this.state.counter > 10 && <div>You have exceeded 10!</div>}
-      <button onClick={this.increment}>Increment</button>
+      <div>Hello {this.props.name}!</div>
+      <div>Counter: {this.state.counter}
+        {this.state.counter > 10 && <div>You have exceeded 10!</div>}
+        <button onClick={this.increment}>Increment</button>
+      </div>
     </div>
   }
 
@@ -274,9 +284,27 @@ export default class Hello extends React.Component {
     this.setState({counter: this.state.counter + 1})
   }
 }
+
+export default hot(Hello)
 ````
 
-Let's configurate Hot Relaod!
+**components/App.jsx, using 'react-hot-loader'**
+
+````js
+import { hot } from 'react-hot-loader/root'
+import React from 'react'
+import Hello from './Hello'
+
+class App extends React.Component {
+  render () {
+    return <Hello name={'world'}/>
+  }
+}
+export default hot(App);
+
+````
+
+**Let's configurate Hot Relaod!**
 
 In **package.json**:
 
@@ -292,20 +320,50 @@ In **package.json**:
 In **webpack.config.js**, add hot-loader in *entry* and in *rules*:
 
 ````js
+const path = require('path')
+const webpack = require('webpack')
+
+let config =  {
+  entry: [
+    'react-hot-loader/patch',
+    './src/main.jsx'
+  ],
+  output: {
+    path: path.resolve(__dirname, 'assets'),
+    filename: 'main.js',
+    publicPath: '/assets/'
+  },
+  resolve: {
+    extensions: ['.js', '.jsx'],
+  },
+  devtool: 'source-map',
+  devServer: {
+    overlay: {
+      errors: true,
+      warnings: true,
+      hot: true
+    }
+  },
   module: {
-    entry: [
-        'react-hot-loader/patch',
-        './src/main.jsx'
-    ],
-    //...
     rules: [
       {
         test: /\.(js|jsx)/, // use babel for js and jsx
         exclude: /node_modules/,
-        loaders: ["react-hot-loader/webpack", "babel-loader"],
+        loaders: ['react-hot-loader/webpack', 'babel-loader'],
       },
     ],
   },
+
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV)
+      }, // we send env var to JS
+    }),
+  ]
+}
+
+module.exports = config
 ````
 
 In Chrome, [React Developer Tools](https://chrome.google.com/webstore/detail/react-developer-tools) (components) should display that Hot Module Replacement and is enabled.
@@ -316,12 +374,57 @@ In Chrome, [React Developer Tools](https://chrome.google.com/webstore/detail/rea
 
 
 
+In **src/main.jsx**, we have to wrap our application into `<AppContainer>`to apply Hot Reload on all that application...
+
+````js
+
+import { AppContainer } from 'react-hot-loader'
+import React from 'react';
+import ReactDOM from 'react-dom'
+import App from './components/App'
+
+const renderApp = Component => {
+  ReactDOM.render(
+    <AppContainer>
+      <App/>
+    </AppContainer>,
+    document.getElementById('app')
+  );
+}
+
+renderApp(App);
+
+if (module.hot) {
+  module.hot.accept('./components/App', () => { renderApp(App) });
+}
+
+
+````
+
+To apply the hot module, we use that syntax as described into the [documentation](https://webpack.js.org/api/hot-module-replacement/):
+
+````js
+module.hot.accept(
+  dependencies, // Either a string or an array of strings
+  callback // Function to fire when the dependencies are updated
+);
+````
+
+## Result
+
+Now, if we change some code in the application, the state will stay persistant...
+
+Usefull for debuging big applications without filling tons of forms and so on to test...
 
 
 
+![capture chrome](img-readme/browser-capture01.PNG)
+
+![capture chrome](img-readme/browser-capture02.PNG)
 
 ## Useful links
 
 - [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/)
 - [react-hot-loader](https://www.npmjs.com/package/react-hot-loader)
 - [gaearon/react-hot-loader](gaearon/react-hot-loader)
+- [React Hot Loader with Web Dev Server](https://dev.to/nanosoftonline/react-hot-loader-with-web-dev-server-aop)
