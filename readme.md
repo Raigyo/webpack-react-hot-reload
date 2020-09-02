@@ -6,6 +6,8 @@
 
 For a general Webpack overview, see my [webpack-overview](https://github.com/Raigyo/webpack-overview) repository.
 
+For the React version with hooks see my [webpack-react-hot-reload-hooks](https://github.com/Raigyo/webpack-react-hot-reload-hooks) repository.
+
 ![Webpack logo](./img-readme/react-webpack-logo.png)
 
 
@@ -428,3 +430,4 @@ Usefull for debuging big applications without filling tons of forms and so on to
 - [react-hot-loader](https://www.npmjs.com/package/react-hot-loader)
 - [gaearon/react-hot-loader](gaearon/react-hot-loader)
 - [React Hot Loader with Web Dev Server](https://dev.to/nanosoftonline/react-hot-loader-with-web-dev-server-aop)
+- [Set up React App with Webpack, Webpack Dev Server and Babel from scratch](https://medium.com/@imranhsayed/set-up-react-app-with-webpack-webpack-dev-server-and-babel-from-scratch-df398174446d)
